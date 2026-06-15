@@ -5,427 +5,261 @@
 const int SIZE = 256;
 
 bool isCoprime(int x, int y) {
-    for (int i = 2; i < std::min(x, y); i++) {
-        if (x % i == 0 and y % i == 0) {
-            return false;
-        }
+  for (int i = 2; i <= std::min(x, y); i++) {
+    if (x % i == 0 and y % i == 0) {
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 
-int findInverse(int num, int mod) {
-    for (int i = 0; i < mod; i++) {
-        if ((num * i) % mod == 1) {
-            return i;
-        }
+int modInv(int n, int m) {
+  for (int i = 0; i < m; i++) {
+    if ((n * i) % m == 1) {
+      return i;
     }
-    return -1;
+  }
+  return -1;
 }
 
-std::vector<int> textToBytes(std::string text) {
-    std::vector<int> bytes;
-    bytes.resize(text.size());
-    for (int i = 0; i < (int)text.size(); i++) {
-        bytes[i] = (int)text[i];
-    }
-    return bytes;
+std::vector<int> toBytes(std::string s) {
+  std::vector<int> result;
+  result.resize(s.size());
+  for (int i = 0; i < (int)s.size(); i++) {
+    result[i] = (int)s[i];
+  }
+  return result;
 }
 
-std::string bytesToText(std::vector<int> bytes) {
-    std::string result;
-    result.resize(bytes.size());
-    for (int i = 0; i < (int)bytes.size(); i++) {
-        result[i] = (char)bytes[i];
-    }
-    return result;
+std::string fromBytes(std::vector<int> v) {
+  std::string result;
+  result.resize(v.size());
+  for (int i = 0; i < (int)v.size(); i++) {
+    result[i] = (char)v[i];
+  }
+  return result;
 }
 
-std::string cipherSimpleEncrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.size() != SIZE) {
-        throw std::invalid_argument("Key must be exactly 256 characters");
-    }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
+std::string simple(std::string text, std::string key, bool enc) {
+  std::vector<int> data = toBytes(text);
+  std::vector<int> k = toBytes(key);
+
+  if (k.size() != SIZE) {
+    throw std::invalid_argument("key must be 256 bytes");
+  }
+
+  std::vector<int> key_inv;
+  key_inv.resize(SIZE);
+  for (int i = 0; i < SIZE; i++) {
+    key_inv[k[i]] = i;
+  }
+
+  std::vector<int> result;
+  result.resize(data.size());
+
+  if (enc) {
     for (int i = 0; i < (int)data.size(); i++) {
-        int original = data[i];
-        int encrypted = key[original];
-        result[i] = encrypted;
+      result[i] = k[data[i]];
     }
-    
-    return bytesToText(result);
-}
-
-std::string cipherSimpleDecrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.size() != SIZE) {
-        throw std::invalid_argument("Key must be exactly 256 characters");
-    }
-    
-    std::vector<int> reverseKey;
-    reverseKey.resize(SIZE);
-    
-    for (int i = 0; i < SIZE; i++) {
-        reverseKey[key[i]] = i;
-    }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
+  } else {
     for (int i = 0; i < (int)data.size(); i++) {
-        int encrypted = data[i];
-        int original = reverseKey[encrypted];
-        result[i] = original;
+      result[i] = key_inv[data[i]];
     }
-    
-    return bytesToText(result);
+  }
+
+  return fromBytes(result);
 }
 
-std::string cipherAffineEncrypt(std::string text, int a, int b) {
-    if (isCoprime(a, SIZE) == false) {
-        throw std::invalid_argument("Parameter 'a' must be coprime with 256");
-    }
-    
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> result;
-    result.resize(data.size());
-    
+std::string affine(std::string text, int a, int b, bool enc) {
+  if (isCoprime(a, SIZE) == false) {
+    throw std::invalid_argument("a must be coprime with 256");
+  }
+
+  std::vector<int> data = toBytes(text);
+  std::vector<int> result;
+  result.resize(data.size());
+
+  if (enc) {
     for (int i = 0; i < (int)data.size(); i++) {
-        int x = data[i];
-        int y = (a * x + b) % SIZE;
-        result[i] = y;
+      int x = data[i];
+      int y = (a * x + b) % SIZE;
+      result[i] = y;
     }
-    
-    return bytesToText(result);
-}
-
-std::string cipherAffineDecrypt(std::string text, int a, int b) {
-    if (isCoprime(a, SIZE) == false) {
-        throw std::invalid_argument("Parameter 'a' must be coprime with 256");
+  } else {
+    int a_inv = modInv(a, SIZE);
+    if (a_inv == -1) {
+      throw std::runtime_error("no inverse for a");
     }
-    
-    int aInv = findInverse(a, SIZE);
-    if (aInv == -1) {
-        throw std::runtime_error("Failed to find modular inverse");
-    }
-    
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> result;
-    result.resize(data.size());
-    
     for (int i = 0; i < (int)data.size(); i++) {
-        int y = data[i];
-        
-        int step1 = y - b;
-        if (step1 < 0) {
-            step1 = step1 + SIZE;
-        }
-        
-        int step2 = aInv * step1;
-        int x = step2 % SIZE;
-        
-        result[i] = x;
+      int y = data[i];
+      int step = y - b;
+      if (step < 0) {
+        step = step + SIZE;
+      }
+      int x = (a_inv * step) % SIZE;
+      result[i] = x;
     }
-    
-    return bytesToText(result);
+  }
+
+  return fromBytes(result);
 }
 
-std::string cipherAffineRecurrentEncrypt(std::string text, int a1, int b1, int a2, int b2) {
-    if (isCoprime(a1, SIZE) == false) {
-        throw std::invalid_argument("a1 must be coprime with 256");
-    }
-    if (isCoprime(a2, SIZE) == false) {
-        throw std::invalid_argument("a2 must be coprime with 256");
-    }
-    
-    std::vector<int> data = textToBytes(text);
-    if (data.size() < 2) {
-        throw std::invalid_argument("Text must be at least 2 characters");
-    }
-    
-    std::vector<int> A;
-    std::vector<int> B;
-    A.push_back(a1);
-    A.push_back(a2);
-    B.push_back(b1);
-    B.push_back(b2);
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    int x0 = data[0];
-    int y0 = (A[0] * x0 + B[0]) % SIZE;
-    result[0] = y0;
-    
-    int x1 = data[1];
-    int y1 = (A[1] * x1 + B[1]) % SIZE;
-    result[1] = y1;
-    
-    for (int i = 2; i < (int)data.size(); i++) {
-        int newA = (A[i-1] * A[i-2]) % SIZE;
-        
-        if (isCoprime(newA, SIZE) == false) {
-            throw std::runtime_error("Generated coefficient not coprime");
-        }
-        
-        A.push_back(newA);
-        
-        int newB = (B[i-1] + B[i-2]) % SIZE;
-        B.push_back(newB);
-        
-        int xi = data[i];
-        int yi = (A[i] * xi + B[i]) % SIZE;
-        result[i] = yi;
-    }
-    
-    return bytesToText(result);
-}
+std::string recurrent(std::string text, int a1, int b1, int a2, int b2,
+                      bool enc) {
+  if (isCoprime(a1, SIZE) == false or isCoprime(a2, SIZE) == false) {
+    throw std::invalid_argument("a1 and a2 must be coprime");
+  }
 
-std::string cipherAffineRecurrentDecrypt(std::string text, int a1, int b1, int a2, int b2) {
-    if (isCoprime(a1, SIZE) == false) {
-        throw std::invalid_argument("a1 must be coprime with 256");
-    }
-    if (isCoprime(a2, SIZE) == false) {
-        throw std::invalid_argument("a2 must be coprime with 256");
-    }
-    
-    std::vector<int> data = textToBytes(text);
-    if (data.size() < 2) {
-        throw std::invalid_argument("Text must be at least 2 characters");
-    }
-    
-    std::vector<int> A;
-    std::vector<int> B;
-    A.push_back(a1);
-    A.push_back(a2);
-    B.push_back(b1);
-    B.push_back(b2);
-    
-    int aInv1 = findInverse(A[0], SIZE);
-    int aInv2 = findInverse(A[1], SIZE);
-    
-    if (aInv1 == -1 or aInv2 == -1) {
-        throw std::runtime_error("Failed to find modular inverse");
-    }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    int y0 = data[0];
-    int step0 = y0 - B[0];
-    if (step0 < 0) step0 = step0 + SIZE;
-    int x0 = (aInv1 * step0) % SIZE;
-    result[0] = x0;
-    
-    int y1 = data[1];
-    int step1 = y1 - B[1];
-    if (step1 < 0) step1 = step1 + SIZE;
-    int x1 = (aInv2 * step1) % SIZE;
-    result[1] = x1;
-    
-    for (int i = 2; i < (int)data.size(); i++) {
-        int newA = (A[i-1] * A[i-2]) % SIZE;
-        
-        if (isCoprime(newA, SIZE) == false) {
-            throw std::runtime_error("Generated coefficient not coprime");
-        }
-        
-        A.push_back(newA);
-        
-        int newB = (B[i-1] + B[i-2]) % SIZE;
-        B.push_back(newB);
-        
-        int aInv = findInverse(A[i], SIZE);
-        
-        if (aInv == -1) {
-            throw std::runtime_error("Failed to find modular inverse");
-        }
-        
-        int yi = data[i];
-        int step = yi - B[i];
-        if (step < 0) step = step + SIZE;
-        int xi = (aInv * step) % SIZE;
-        result[i] = xi;
-    }
-    
-    return bytesToText(result);
-}
+  std::vector<int> data = toBytes(text);
+  if (data.size() < 2) {
+    throw std::invalid_argument("text too short");
+  }
 
-std::string cipherVigenereKeyEncrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
+  std::vector<int> A;
+  std::vector<int> B;
+  A.push_back(a1);
+  A.push_back(a2);
+  B.push_back(b1);
+  B.push_back(b2);
+
+  for (int i = 2; i < (int)data.size(); i++) {
+    int newA = (A[i - 1] * A[i - 2]) % SIZE;
+    if (isCoprime(newA, SIZE) == false) {
+      throw std::runtime_error("bad coefficient");
     }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    int keyLen = key.size();
-    
+    A.push_back(newA);
+
+    int newB = (B[i - 1] + B[i - 2]) % SIZE;
+    B.push_back(newB);
+  }
+
+  std::vector<int> result;
+  result.resize(data.size());
+
+  if (enc) {
     for (int i = 0; i < (int)data.size(); i++) {
-        int d = data[i];
-        int k = key[i % keyLen];
-        int e = (d + k) % SIZE;
-        result[i] = e;
+      result[i] = (A[i] * data[i] + B[i]) % SIZE;
     }
-    
-    return bytesToText(result);
+  } else {
+    for (int i = 0; i < (int)data.size(); i++) {
+      int a_inv = modInv(A[i], SIZE);
+      if (a_inv == -1) {
+        throw std::runtime_error("no inverse");
+      }
+      int step = data[i] - B[i];
+      if (step < 0) {
+        step = step + SIZE;
+      }
+      result[i] = (a_inv * step) % SIZE;
+    }
+  }
+
+  return fromBytes(result);
 }
 
-std::string cipherVigenereKeyDecrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
+std::string vigKey(std::string text, std::string key, bool enc) {
+  std::vector<int> data = toBytes(text);
+  std::vector<int> k = toBytes(key);
+
+  if (k.empty()) {
+    throw std::invalid_argument("key is empty");
+  }
+
+  std::vector<int> result;
+  result.resize(data.size());
+  int keyLen = k.size();
+
+  for (int i = 0; i < (int)data.size(); i++) {
+    if (enc) {
+      result[i] = (data[i] + k[i % keyLen]) % SIZE;
+    } else {
+      int temp = data[i] - k[i % keyLen];
+      if (temp < 0) {
+        temp = temp + SIZE;
+      }
+      result[i] = temp;
     }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    int keyLen = key.size();
-    
-    for (int i = 0; i < (int)data.size(); i++) {
-        int e = data[i];
-        int k = key[i % keyLen];
-        int d = e - k;
-        
-        if (d < 0) {
-            d = d + SIZE;
-        }
-        
-        result[i] = d;
-    }
-    
-    return bytesToText(result);
+  }
+
+  return fromBytes(result);
 }
 
-std::string cipherVigenereOpenEncrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
+std::string vigOpen(std::string text, std::string key, bool enc) {
+  std::vector<int> data = toBytes(text);
+  std::vector<int> k = toBytes(key);
+
+  if (k.empty()) {
+    throw std::invalid_argument("key is empty");
+  }
+
+  std::vector<int> result;
+  result.resize(data.size());
+  std::vector<int> openText;
+  openText.resize(data.size());
+
+  for (int i = 0; i < (int)data.size(); i++) {
+    int gamma;
+
+    if (i == 0) {
+      gamma = k[0];
+    } else {
+      if (enc) {
+        gamma = data[i - 1];
+      } else {
+        gamma = result[i - 1];
+      }
     }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    for (int i = 0; i < (int)data.size(); i++) {
-        int gamma;
-        
-        if (i == 0) {
-            gamma = key[0];
-        } else {
-            gamma = data[i - 1];
-        }
-        
-        int d = data[i];
-        int e = (d + gamma) % SIZE;
-        result[i] = e;
+
+    if (enc) {
+      result[i] = (data[i] + gamma) % SIZE;
+      openText[i] = data[i];
+    } else {
+      int temp = data[i] - gamma;
+      if (temp < 0) {
+        temp = temp + SIZE;
+      }
+      result[i] = temp;
+      openText[i] = result[i];
     }
-    
-    return bytesToText(result);
+  }
+
+  return fromBytes(result);
 }
 
-std::string cipherVigenereOpenDecrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
-    }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    for (int i = 0; i < (int)data.size(); i++) {
-        int gamma;
-        
-        if (i == 0) {
-            gamma = key[0];
-        } else {
-            gamma = result[i - 1];
-        }
-        
-        int e = data[i];
-        int d = e - gamma;
-        
-        if (d < 0) {
-            d = d + SIZE;
-        }
-        
-        result[i] = d;
-    }
-    
-    return bytesToText(result);
-}
+std::string vigCipher(std::string text, std::string key, bool enc) {
+  std::vector<int> data = toBytes(text);
+  std::vector<int> k = toBytes(key);
 
-std::string cipherVigenereCipherEncrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
-    }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    for (int i = 0; i < (int)data.size(); i++) {
-        int gamma;
-        
-        if (i == 0) {
-            gamma = key[0];
-        } else {
-            gamma = result[i - 1];
-        }
-        
-        int d = data[i];
-        int e = (d + gamma) % SIZE;
-        result[i] = e;
-    }
-    
-    return bytesToText(result);
-}
+  if (k.empty()) {
+    throw std::invalid_argument("key is empty");
+  }
 
-std::string cipherVigenereCipherDecrypt(std::string text, std::string keyString) {
-    std::vector<int> data = textToBytes(text);
-    std::vector<int> key = textToBytes(keyString);
-    
-    if (key.empty()) {
-        throw std::invalid_argument("Key cannot be empty");
+  std::vector<int> result;
+  result.resize(data.size());
+
+  for (int i = 0; i < (int)data.size(); i++) {
+    int gamma;
+
+    if (i == 0) {
+      gamma = k[0];
+    } else {
+      if (enc) {
+        gamma = result[i - 1];
+      } else {
+        gamma = data[i - 1];
+      }
     }
-    
-    std::vector<int> result;
-    result.resize(data.size());
-    
-    for (int i = 0; i < (int)data.size(); i++) {
-        int gamma;
-        
-        if (i == 0) {
-            gamma = key[0];
-        } else {
-            gamma = data[i - 1];
-        }
-        
-        int e = data[i];
-        int d = e - gamma;
-        
-        if (d < 0) {
-            d = d + SIZE;
-        }
-        
-        result[i] = d;
+
+    if (enc) {
+      result[i] = (data[i] + gamma) % SIZE;
+    } else {
+      int temp = data[i] - gamma;
+      if (temp < 0) {
+        temp = temp + SIZE;
+      }
+      result[i] = temp;
     }
-    
-    return bytesToText(result);
+  }
+
+  return fromBytes(result);
 }

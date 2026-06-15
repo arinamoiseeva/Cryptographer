@@ -6,6 +6,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(cipher main.cpp ciphers.cpp)
 
+# Google Test
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
+FetchContent_MakeAvailable(googletest)
+
 enable_testing()
 add_executable(tests tests.cpp ciphers.cpp)
-add_test(NAME CipherTests COMMAND tests)
+target_link_libraries(tests gtest gtest_main)
+add_test(NAME AllTests COMMAND tests)
