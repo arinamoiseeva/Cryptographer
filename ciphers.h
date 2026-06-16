@@ -16,7 +16,7 @@ bool isCoprime(int x, int y);
  * @brief Находит обратный элемент числа по модулю
  * @param n число
  * @param m модуль
- * @return обратный элемент, или -1 если не найден
+ * @return обратный элемент или -1 если не найден
  */
 int modInv(int n, int m);
 
@@ -40,6 +40,7 @@ std::string fromBytes(std::vector<int> v);
  * @param key ключ (256 байт, перестановка 0-255)
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если ключ не равен 256 байтам
  */
 std::string simple(std::string text, std::string key, bool enc);
 
@@ -50,6 +51,8 @@ std::string simple(std::string text, std::string key, bool enc);
  * @param b коэффициент сдвига
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если a не взаимно просто с 256
+ * @throws std::runtime_error если не найден обратный элемент для a
  */
 std::string affine(std::string text, int a, int b, bool enc);
 
@@ -62,6 +65,10 @@ std::string affine(std::string text, int a, int b, bool enc);
  * @param b2 второй коэффициент сдвига
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если a1 или a2 не взаимно просты с 256
+ * @throws std::invalid_argument если текст короче 2 символов
+ * @throws std::runtime_error если сгенерированный коэффициент a[i] не взаимно прост с 256
+ * @throws std::runtime_error если не найден обратный элемент для коэффициента a[i]
  */
 std::string recurrent(std::string text, int a1, int b1, int a2, int b2,
                       bool enc);
@@ -72,6 +79,7 @@ std::string recurrent(std::string text, int a1, int b1, int a2, int b2,
  * @param key ключ
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если ключ пустой
  */
 std::string vigKey(std::string text, std::string key, bool enc);
 
@@ -81,6 +89,7 @@ std::string vigKey(std::string text, std::string key, bool enc);
  * @param key ключ
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если ключ пустой
  */
 std::string vigOpen(std::string text, std::string key, bool enc);
 
@@ -90,6 +99,7 @@ std::string vigOpen(std::string text, std::string key, bool enc);
  * @param key ключ
  * @param enc true - шифрование, false - расшифрование
  * @return результат
+ * @throws std::invalid_argument если ключ пустой
  */
 std::string vigCipher(std::string text, std::string key, bool enc);
 

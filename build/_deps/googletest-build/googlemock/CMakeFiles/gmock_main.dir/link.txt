@@ -1,0 +1,2 @@
+C:\arinok\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r5\mingw64\bin\ar.exe qc ..\..\..\lib\libgmock_main.a CMakeFiles/gmock_main.dir/src/gmock_main.cc.obj
+C:\arinok\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r5\mingw64\bin\ranlib.exe ..\..\..\lib\libgmock_main.a
