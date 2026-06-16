@@ -52,7 +52,6 @@ std::string simple(std::string text, std::string key, bool enc);
  * @param enc true - шифрование, false - расшифрование
  * @return результат
  * @throws std::invalid_argument если a не взаимно просто с 256
- * @throws std::runtime_error если не найден обратный элемент для a
  */
 std::string affine(std::string text, int a, int b, bool enc);
 
@@ -67,8 +66,6 @@ std::string affine(std::string text, int a, int b, bool enc);
  * @return результат
  * @throws std::invalid_argument если a1 или a2 не взаимно просты с 256
  * @throws std::invalid_argument если текст короче 2 символов
- * @throws std::runtime_error если сгенерированный коэффициент a[i] не взаимно прост с 256
- * @throws std::runtime_error если не найден обратный элемент для коэффициента a[i]
  */
 std::string recurrent(std::string text, int a1, int b1, int a2, int b2,
                       bool enc);

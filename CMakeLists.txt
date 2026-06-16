@@ -14,19 +14,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-enable_testing()
 add_executable(run_tests tests.cpp ciphers.cpp)
 target_link_libraries(run_tests gtest gtest_main)
 
-add_test(NAME SimpleNegative COMMAND run_tests --gtest_filter=SimpleTest.Negative)
-
-add_test(NAME AffinePositive COMMAND run_tests --gtest_filter=AffineTest.Positive)
-add_test(NAME AffineNegative COMMAND run_tests --gtest_filter=AffineTest.Negative)
-
-add_test(NAME RecurrentPositive COMMAND run_tests --gtest_filter=RecurrentAffineTest.Positive)
-add_test(NAME RecurrentNegative COMMAND run_tests --gtest_filter=RecurrentAffineTest.Negative)
-
-add_test(NAME VigKeyPositive COMMAND run_tests --gtest_filter=VigKeyTest.Positive)
-add_test(NAME VigKeyNegative COMMAND run_tests --gtest_filter=VigKeyTest.Negative)
-
-add_test(NAME VigCipherPositive COMMAND run_tests --gtest_filter=VigCipherTest.Positive)
+add_test(NAME run_tests COMMAND run_tests)

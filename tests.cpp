@@ -3,7 +3,7 @@
 #include <string>
 
 TEST(SimpleTest, Negative) {
-    EXPECT_THROW(simple("Abracadabra", "shortkey", true), std::invalid_argument);
+  EXPECT_THROW(simple("Abracadabra", "shortkey", true), std::invalid_argument);
 }
 
 TEST(AffineTest, Positive) {
@@ -38,7 +38,6 @@ TEST(VigKeyTest, Positive) {
 TEST(VigKeyTest, Negative) {
   EXPECT_THROW(vigKey("Skating", "", true), std::invalid_argument);
 }
-
 
 TEST(VigCipherTest, Positive) {
   std::string s = "Mount Everest";
